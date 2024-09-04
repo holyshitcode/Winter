@@ -3,4 +3,5 @@ project(winter C)
 
 set(CMAKE_C_STANDARD 11)
 
-add_executable(winter main.c)
+add_executable(winter main.c
+        Linked.c)

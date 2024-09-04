@@ -660,8 +660,8 @@
 	"kind" : "cmakeFiles",
 	"paths" : 
 	{
-		"build" : "/Users/junyeong/winter/cmake-build-debug",
-		"source" : "/Users/junyeong/winter"
+		"build" : "/Users/junyeong/winter/link/cmake-build-debug",
+		"source" : "/Users/junyeong/winter/link"
 	},
 	"version" : 
 	{
