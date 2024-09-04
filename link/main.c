@@ -1,11 +1,24 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 enum dataType {
     STRING,
     INTEGER,
     CHAR
+};
+
+enum operation {
+    INPUT,
+    SHOW,
+    DELETE,
+    EXIT
+};
+
+enum exitFlag {
+    in,
+    out
 };
 
 typedef struct node {
@@ -41,15 +54,64 @@ void showData() {
     node *temp = head;
     while (temp != NULL) {
         if (temp->data != NULL) {
-            // 여기가 중요: 삽입된 데이터가 어떤 타입인지 확인하여 출력
-            if (temp->type == STRING ) {
+            if (temp->type == STRING) {
                 printf("String Data: %s\n", (char *)temp->data);
             } else if (temp->type == INTEGER) {
                 printf("Integer Data: %d\n", *(int *)temp->data);
+            } else if (temp->type == CHAR) {
+                printf("Character Data: %c\n", *(char *)temp->data);
             }
         }
         temp = temp->next;
     }
+}
+
+void deleteData(void *data, enum dataType type) {
+    node *temp = head;
+    node *prev = NULL;
+
+    while (temp != NULL) {
+        if (temp->type == type) {
+            bool toDelete = false;
+            switch (type) {
+                case STRING:
+                    if (strcmp((char *)temp->data, (char *)data) == 0)
+                        toDelete = true;
+                    break;
+                case INTEGER:
+                    if (*(int *)temp->data == *(int *)data)
+                        toDelete = true;
+                    break;
+                case CHAR:
+                    if (*(char *)temp->data == *(char *)data)
+                        toDelete = true;
+                    break;
+            }
+
+            if (toDelete) {
+                if (prev == NULL) { // 첫 번째 노드 삭제
+                    head = temp->next;
+                    if (temp == tail) { // 노드가 하나만 있을 때
+                        tail = NULL;
+                    }
+                } else { // 중간 또는 마지막 노드 삭제
+                    prev->next = temp->next;
+                    if (temp == tail) { // 마지막 노드 삭제
+                        tail = prev;
+                    }
+                }
+
+                free(temp->data);
+                free(temp);
+                printf("Data deleted successfully.\n");
+                return;
+            }
+        }
+        prev = temp;
+        temp = temp->next;
+    }
+
+    printf("Data not found.\n");
 }
 
 void freeList() {
@@ -64,52 +126,97 @@ void freeList() {
 }
 
 int main(void) {
+    enum exitFlag exitFlag = in;
+    int choice, dataTypeFlag;
 
-    bool flag = true;
+    while (exitFlag == in) {
+        printf("1. Insert\n2. Show\n3. Delete\n4. Exit\n");
+        printf("Enter your choice: ");
+        scanf("%d", &choice);
 
-    while (flag) {
-        int intData;
-        char charData;
+        switch (choice) {
+            case 1: {
+                printf("Enter dataType[1.String, 2.Char, 3.Integer]: ");
+                scanf("%d", &dataTypeFlag);
 
-        printf("Please enter an integer: ");
-        scanf("%d", &intData);
+                if (dataTypeFlag == 1) {
+                    char *stringData = malloc(100 * sizeof(char));  // 문자열 메모리 할당
+                    if (stringData == NULL) {
+                        fprintf(stderr, "Memory allocation failed\n");
+                        exit(EXIT_FAILURE);
+                    }
+                    printf("Input Data in String: ");
+                    scanf("%s", stringData);
+                    insertData(stringData, STRING);
 
-        // 버퍼에 남아있는 개행 문자를 제거합니다.
-        while (getchar() != '\n');
+                } else if (dataTypeFlag == 2) {
+                    char *charData = malloc(sizeof(char));
+                    if (charData == NULL) {
+                        fprintf(stderr, "Memory allocation failed\n");
+                        exit(EXIT_FAILURE);
+                    }
+                    printf("Input Data in Char: ");
+                    scanf(" %c", charData);
+                    insertData(charData, CHAR);
 
-        printf("Please enter a character: ");
-        scanf("%c", &charData);
+                } else if (dataTypeFlag == 3) {
+                    int *intData = malloc(sizeof(int));
+                    if (intData == NULL) {
+                        fprintf(stderr, "Memory allocation failed\n");
+                        exit(EXIT_FAILURE);
+                    }
+                    printf("Input Data in Integer: ");
+                    scanf("%d", intData);
+                    insertData(intData, INTEGER);
 
-        // 문자열 데이터 동적 할당
-        char *stringData = malloc(intData * sizeof(char));
-        if (stringData == NULL) {
-            fprintf(stderr, "Memory allocation failed\n");
-            exit(EXIT_FAILURE);
+                } else {
+                    printf("Invalid data type.\n");
+                }
+                break;
+            }
+
+            case 2:
+                showData();
+                break;
+
+            case 3: {
+                printf("Enter dataType[1.String, 2.Char, 3.Integer]: ");
+                scanf("%d", &dataTypeFlag);
+
+                if (dataTypeFlag == 1) {
+                    char stringData[100];
+                    printf("Input Data in String: ");
+                    scanf("%s", stringData);
+                    deleteData(stringData, STRING);
+
+                } else if (dataTypeFlag == 2) {
+                    char charData;
+                    printf("Input Data in Char: ");
+                    scanf(" %c", &charData);
+                    deleteData(&charData, CHAR);
+
+                } else if (dataTypeFlag == 3) {
+                    int intData;
+                    printf("Input Data in Integer: ");
+                    scanf("%d", &intData);
+                    deleteData(&intData, INTEGER);
+
+                } else {
+                    printf("Invalid data type.\n");
+                }
+                break;
+            }
+
+            case 4:
+                exitFlag = out;
+                break;
+
+            default:
+                printf("Invalid choice.\n");
+                break;
         }
-        printf("Please enter a string: ");
-        scanf("%s", stringData);
-
-        // 데이터를 삽입
-        insertData(stringData,STRING);
-
-        // int 값을 저장하기 위해 동적 메모리 할당
-        int *intPtr = malloc(sizeof(int));
-        if (intPtr == NULL) {
-            fprintf(stderr, "Memory allocation failed\n");
-            exit(EXIT_FAILURE);
-        }
-        *intPtr = intData;
-        insertData(intPtr,INTEGER);
-
-        // 종료를 위한 플래그 설정
-        flag = false;
     }
 
-    // 데이터 출력
-    showData();
-
-    // 리스트 메모리 해제
     freeList();
-
     return 0;
 }
