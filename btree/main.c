@@ -1,6 +1,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <tgmath.h>
 
 
 /**
@@ -31,6 +32,7 @@ node *createNode(int newValue) {
     return newNode;
 }
 
+/*
 node *searchNode(node *target, int key) {
     if (target == NULL) {
         return NULL;
@@ -53,6 +55,36 @@ node *searchNode(node *target, int key) {
         return searchNode(target->child[RIGHT], key);
     }
     return target;
+}*/
+node *searchNode(node *target, int key) {
+    if (target == NULL) {
+        return NULL;
+    }
+
+    // 현재 노드의 키들과 비교
+    for (int i = 0; i < target->currentKeyCount; i++) {
+        if (key == target->keyValue[i]) {
+            return target; // 키를 찾음
+        }
+    }
+
+    // 자식 노드로 내려가기 위한 조건
+    if (key < target->keyValue[0]) {
+        // 첫 번째 키보다 작은 경우
+        return searchNode(target->child[LEFT], key);
+    } else if (target->currentKeyCount == 1) {
+        // 하나의 키만 있는 경우, 그 키보다 큰 값은 오른쪽 자식으로
+        return searchNode(target->child[RIGHT], key);
+    } else {
+        // 두 개의 키가 있는 경우
+        if (key < target->keyValue[1]) {
+            // 두 키 사이에 있는 경우 가운데 자식
+            return searchNode(target->child[CENTER], key);
+        } else {
+            // 두 번째 키보다 큰 경우 오른쪽 자식
+            return searchNode(target->child[RIGHT], key);
+        }
+    }
 }
 
 
@@ -79,20 +111,14 @@ node *insertNode(node *target, int key) {
 }
 */
 node *split(node *target, int key) {
-    if (target == NULL) {
-        return NULL;
-    }
-
-    // 새 키와 기존 키들을 함께 정렬된 상태로 저장
     int tempKeys[M];
     for (int i = 0; i < target->currentKeyCount; i++) {
         tempKeys[i] = target->keyValue[i];
     }
     tempKeys[target->currentKeyCount] = key;
 
-    // 키들을 정렬 (단순 삽입 정렬)
-    for (int i = 0; i < target->currentKeyCount; i++) {
-        for (int j = i + 1; j <= target->currentKeyCount; j++) {
+    for (int i = 0; i < M - 1; i++) {
+        for (int j = i + 1; j < M; j++) {
             if (tempKeys[i] > tempKeys[j]) {
                 int temp = tempKeys[i];
                 tempKeys[i] = tempKeys[j];
@@ -101,22 +127,19 @@ node *split(node *target, int key) {
         }
     }
 
-    // 중간 키 선택
-    int midIndex = (M - 1) / 2;
+    int midIndex = M / 2;
     int midKey = tempKeys[midIndex];
 
-    // 새로운 좌우 노드 생성
     node *leftNode = createNode(tempKeys[0]);
     node *rightNode = createNode(tempKeys[midIndex + 1]);
 
-    for (int i = 1; i < midIndex; i++) {
+    for (int i = 1; i < ceil(midIndex); i++) {
         leftNode->keyValue[leftNode->currentKeyCount++] = tempKeys[i];
     }
     for (int i = midIndex + 2; i < M; i++) {
         rightNode->keyValue[rightNode->currentKeyCount++] = tempKeys[i];
     }
 
-    // 자식이 있으면 자식 노드를 좌우로 분배
     if (!target->leafStatus) {
         for (int i = 0; i <= midIndex; i++) {
             leftNode->child[i] = target->child[i];
@@ -128,9 +151,7 @@ node *split(node *target, int key) {
         rightNode->leafStatus = false;
     }
 
-    // 새로운 부모 노드를 반환하거나, 부모에게 중간 키를 삽입
     if (target == root) {
-        // 루트 분할
         node *newRoot = createNode(midKey);
         newRoot->child[LEFT] = leftNode;
         newRoot->child[RIGHT] = rightNode;
@@ -138,32 +159,28 @@ node *split(node *target, int key) {
         root = newRoot;
         return newRoot;
     } else {
-        // 부모 노드로 중간 키를 올림 (추가 작업 필요)
         return insertNode(root, midKey);
     }
 }
 
 bool duplicatedKey(node *target, int key) {
-    if (target == NULL) {
-        return false;
-    }
-    if (searchNode(target, key) == NULL) {
-        return false;
-    }
+    // 키 중복 여부를 확인
     if (searchNode(target, key) != NULL) {
-        return true;
+        printf("duplicated key(%d) found and deleted\n", key);
+        return true; // 중복 키가 있음을 표시
     }
-    return false;
+    return false; // 중복이 아닐 경우
 }
 
 node *insertNode(node *target, int key) {
-    if (duplicatedKey(target,key)) {
-        printf("duplicated key(%d) found and deleted\n",key);
-        return target;
+    if (duplicatedKey(target, key)) {
+        return target; // 중복된 키가 있을 경우 삽입하지 않음
     }
+
     if (target == NULL) {
         return createNode(key); // 새 노드 생성
     }
+
     if (target->leafStatus) {
         // 리프 노드에 삽입
         if (target->currentKeyCount < M - 1) {
@@ -177,12 +194,20 @@ node *insertNode(node *target, int key) {
     } else {
         // 리프가 아니면 적절한 자식으로 이동
         if (key < target->keyValue[0]) {
+            // 왼쪽 자식으로 이동
             target->child[LEFT] = insertNode(target->child[LEFT], key);
-        } else if (target->currentKeyCount == 1 || (key > target->keyValue[0] && key < target->keyValue[1])) {
+        } else if (target->currentKeyCount == 1) {
+            // 노드에 하나의 키만 있는 경우 오른쪽으로 이동
+            target->child[RIGHT] = insertNode(target->child[RIGHT], key);
+        } else if (key < target->keyValue[1]) {
+            // 두 개의 키가 있는 경우 가운데로 이동
             target->child[CENTER] = insertNode(target->child[CENTER], key);
         } else {
+            // 그 외의 경우 오른쪽으로 이동
             target->child[RIGHT] = insertNode(target->child[RIGHT], key);
         }
+
+        // 자식 노드를 업데이트한 후 현재 노드를 반환
         return target;
     }
 }
@@ -192,19 +217,22 @@ void printTree(node *root, int level) {
         return;
     }
 
+    // 현재 레벨의 키들을 출력
     printf("Level %d: ", level);
     for (int i = 0; i < root->currentKeyCount; i++) {
         printf("%d ", root->keyValue[i]);
     }
     printf("\n");
 
+    // 리프 노드가 아닌 경우, 자식 노드들을 출력
     if (!root->leafStatus) {
         for (int i = 0; i <= root->currentKeyCount; i++) {
-            printTree(root->child[i], level + 1);
+            if (root->child[i] != NULL) {
+                printTree(root->child[i], level + 1);
+            }
         }
     }
 }
-
 void testInsert() {
     printf("Inserting keys into B-Tree:\n");
 
@@ -219,17 +247,18 @@ void testInsert() {
     // insertNode(root, 60);
     // insertNode(root, 10);
     insertNode(root, 10);
-    insertNode(root, 10);
 
     insertNode(root, 20);
     insertNode(root, 30);
+    insertNode(root, 50);
+    insertNode(root, 70);
 
 
     printf("Tree structure after inserts:\n");
     printTree(root, 0);
 }
 
-void testSearch(int key) {
+void testSearch(node *root,int key) {
     node *result = searchNode(root, key);
     if (result != NULL) {
         printf("Key %d found in the tree!\n", key);
@@ -247,9 +276,9 @@ int main(void) {
 
     // 검색 테스트
     printf("\nSearching for keys in B-Tree:\n");
-    testSearch(20); // 존재하는 키
-    testSearch(50); // 존재하는 키
-    testSearch(70); // 존재하지 않는 키
+    testSearch(root,20); // 존재하는 키
+    testSearch(root,50); // 존재하는 키
+    testSearch(root,70); // 존재하지 않는 키
 
     return 0;
 }
