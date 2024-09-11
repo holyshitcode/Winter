@@ -72,19 +72,20 @@ node *searchNode(node *target, int key) {
     if (key < target->keyValue[0]) {
         // 첫 번째 키보다 작은 경우
         return searchNode(target->child[LEFT], key);
-    } else if (target->currentKeyCount == 1) {
+    } if (target->currentKeyCount == 1) {
         // 하나의 키만 있는 경우, 그 키보다 큰 값은 오른쪽 자식으로
         return searchNode(target->child[RIGHT], key);
-    } else {
+    } if (target->currentKeyCount == 2) {
         // 두 개의 키가 있는 경우
-        if (key < target->keyValue[1]) {
+        if (target->keyValue[0] <= key <= target->keyValue[1]) {
             // 두 키 사이에 있는 경우 가운데 자식
             return searchNode(target->child[CENTER], key);
-        } else {
+        } if (key > target->keyValue[1]) {
             // 두 번째 키보다 큰 경우 오른쪽 자식
             return searchNode(target->child[RIGHT], key);
         }
     }
+    return target;
 }
 
 
@@ -236,18 +237,8 @@ void printTree(node *root, int level) {
 void testInsert() {
     printf("Inserting keys into B-Tree:\n");
 
-    // insertNode(root, 30);
-    // insertNode(root, 20);
-    // insertNode(root, 10);
-    // insertNode(root, 15);
-    // insertNode(root, 5);
-    // insertNode(root, 50);
-    // insertNode(root, 50);
-    // insertNode(root, 50);
-    // insertNode(root, 60);
-    // insertNode(root, 10);
-    insertNode(root, 10);
 
+    insertNode(root, 10);
     insertNode(root, 20);
     insertNode(root, 30);
     insertNode(root, 50);
