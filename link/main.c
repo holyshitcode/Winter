@@ -2,28 +2,29 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-
 /**
  * 노드의 데이터타입을 구분하는 enum
  */
 enum dataType {
-    STRING, INTEGER, CHAR, STRUCT
+    STRING,
+    INTEGER,
+    CHAR
 };
 /**
  * 메인프로그램 동작시에 유저가 선택하는 작동
  */
 enum operation {
-    INPUT, SHOW, DELETE, EXIT
+    INPUT,
+    SHOW,
+    DELETE,
+    EXIT
 };
 /**
  * 메인프로그램 종료플래그
  */
 enum exitFlag {
-    in, out
-};
-enum sex {
-    MALE,FEMALE
+    in,
+    out
 };
 
 typedef struct node {
@@ -31,14 +32,6 @@ typedef struct node {
     struct node *next;
     enum dataType type;
 } node;
-
-typedef struct info {
-    char *name;
-    int age;
-    enum sex sex;
-    char *cellNumber;
-    char grade;
-}info;
 
 node *head = NULL;
 node *tail = NULL;
@@ -48,22 +41,9 @@ void showData();
 void deleteData(void *data, enum dataType type);
 void freeList();
 
-info *getInfo(char *name, char *cellNumber, char grade, enum sex sex, int age) {
-    info info;
-    info.name = strdup(name);
-    info.age = age;
-    info.cellNumber = strdup(cellNumber);
-    info.grade = grade;
-    info.sex = sex;
-    return &info;
-}
-
 int main(void) {
-    char *name , *cellNumber = NULL;
-    char grade = '\0';
-    enum sex sex = MALE;
     enum exitFlag exitFlag = in;
-    int choice, dataTypeFlag, age , sexFlag = 0;
+    int choice, dataTypeFlag;
 
     while (exitFlag == in) {
         printf("1. Insert\n2. Show\n3. Delete\n4. Exit\n");
@@ -102,13 +82,8 @@ int main(void) {
                         exit(EXIT_FAILURE);
                     }
                     printf("Input Data in Integer: ");
-                    if (scanf("%d", intData) != 1) {
-                        printf("Invalid input, please enter a valid integer.\n");
-                        free(intData);
-                        while (getchar() != '\n');
-                        break;
-                    }
-
+                    scanf("%d", intData);
+                    insertData(intData, INTEGER);
 
                 } else {
                     printf("Invalid data type.\n");
@@ -147,51 +122,6 @@ int main(void) {
                 }
                 break;
             }
-            /*case 4: {
-                printf("Enter your info\n");
-                printf("input your name:\n");
-                scanf("%s", name);
-                printf("input your age:\n");
-                scanf("%d", &age);
-                printf("select your sex(1.MALE , 2.FEMALE):\n");
-                scanf("%d", &sexFlag);
-                if(sexFlag == 1) {
-                    sex = MALE;
-                }else if(sexFlag == 2) {
-                    sex = FEMALE;
-                }else {
-                    printf("put the right number");
-                    break;
-                }
-                printf("Put your cell number:\n");
-                scanf("%s", cellNumber);
-                printf("put your grade(a,b,c,d):\n");
-                scanf("%c", &grade);
-                if (grade == 'a') {
-                    grade = 'A';
-                }else if (grade == 'b') {
-                    grade = 'B';
-                }else if (grade == 'c') {
-                    grade = 'C';
-                }else if (grade == 'd') {
-                    grade = 'D';
-                }else {
-                    printf("Invalid grade, please enter a valid grade.\n");
-                    break;
-                }
-                info *temp = getInfo(name, cellNumber, grade, sex, age);
-
-                insertData(temp, STRUCT);
-
-
-            }*/
-            /*typedef struct info {
-                char *name;
-                int age;
-                enum sex;
-                char *cellNumber;
-                char grade;
-            }info;*/
 
             case 4:
                 exitFlag = out;
